@@ -1,23 +1,27 @@
-node{
-  def app
+node {
+
+   def registryProjet='registry.hub.docker.com/pouyou/'
+   def IMAGE="${registryProjet}nginx:version-${env.BUILD_ID}"
 
     stage('Clone') {
-        checkout scm
+          checkout scm
     }
 
-    stage('Build image') {
-        app = docker.build("srv-web")
+    def img = stage('Build') {
+          docker.build("$IMAGE",  '.')
     }
 
-    stage('Run image') {
-        docker.image('srv-web').withRun('-p 800:80 --name srv_web' ) { c ->
+    stage('Run') {
+          img.withRun("--name run-$BUILD_ID -p 8000:80") { c ->
 
-        sh 'docker ps | grep srv-web'
-
-      
-
+          }
     }
 
+    stage('Push') {
+          docker.withRegistry('https://localhost:5000/', 'user_id') {
+              img.push 'latest'
+              img.push()
+          }
     }
-    
+
 }
